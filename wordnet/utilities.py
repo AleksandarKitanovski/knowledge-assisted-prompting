@@ -15,10 +15,10 @@ def get_polarizing_words(sentence: str, cutoff: float = 0.5) -> WordNetObject:
     :returns dict: List of polarizing word objects
     """
 
-    tokens = set(word_tokenize(sentence))
+    tagged_tokens = set(pos_tag(word_tokenize(sentence), tagset='universal'))
     tagged_tokens = [
         (token, _map_universal_pos_to_wn_pos(pos))
-        for token, pos in pos_tag(tokens, tagset="universal")
+        for token, pos in tagged_tokens
     ]
 
     words = []
