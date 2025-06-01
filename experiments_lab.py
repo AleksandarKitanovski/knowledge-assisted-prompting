@@ -21,9 +21,11 @@ from ollama_interface.gateway import OllamaGateway
 def fetch_data(split, con):
     cur = con.cursor()
     rows = cur.execute(
-        """SELECT id, positive, negative 
-               FROM example 
-               WHERE split = :split""",
+        """
+        SELECT id, positive, negative 
+        FROM example 
+        WHERE split = :split
+        """,
         {"split": split},
     ).fetchall()
     return pd.DataFrame(rows, columns=("Id", "Positive", "Negative"))
@@ -40,7 +42,15 @@ def fetch_flows():
 def configuration(con):
     cur = con.cursor()
     splits = reversed(
-        [row[0] for row in cur.execute("SELECT DISTINCT split FROM example").fetchall()]
+        [
+            row[0]
+            for row in cur.execute(
+                """
+                SELECT DISTINCT split 
+                FROM example
+                """
+            ).fetchall()
+        ]
     )
 
     models = [model_desc.model for model_desc in ollama.list().models]
@@ -98,8 +108,10 @@ def run_and_save_experiment(model, flow_file, temperature, con):
             cur = con.cursor()
             experiment_id = str(uuid4())
             cur.execute(
-                """INSERT INTO experiment(id, timestamp, name, description, flow, model, temperature)
-                   VALUES (:id, :timestamp, :name, :description, :flow, :model, :temperature)""",
+                """
+                INSERT INTO experiment(id, timestamp, name, description, flow, model, temperature)
+                VALUES (:id, :timestamp, :name, :description, :flow, :model, :temperature)
+                """,
                 {
                     "id": experiment_id,
                     "timestamp": str(datetime.now()),
@@ -152,7 +164,8 @@ def evaluate_experiment(experiment_id, output_data, col, con):
                 SET avg_perplexity = :perplexity,
                     rsbleu = :rsbleu,
                     accuracy = :accuracy
-                WHERE id = :experiment_id""",
+                WHERE id = :experiment_id
+                """,
                 {
                     "experiment_id": experiment_id,
                     "perplexity": metrics["perplexity"],
@@ -167,8 +180,10 @@ def save_experiment_outputs(output_data, experiment_id, con):
     cur = con.cursor()
     output_data.apply(
         lambda row: cur.execute(
-            """INSERT INTO experiment_output(id, experiment_id, example_id, output)
-        VALUES (:id, :experiment_id, :example_id, :output)""",
+            """
+            INSERT INTO experiment_output(id, experiment_id, example_id, output)
+            VALUES (:id, :experiment_id, :example_id, :output)
+            """,
             {
                 "id": str(uuid4()),
                 "experiment_id": experiment_id,
