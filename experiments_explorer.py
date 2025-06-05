@@ -34,6 +34,9 @@ def main():
     experiments = fetch_experiments(con)
 
     st.title("Experiment Explorer 🔍")
+    if len(experiments) <= 0:
+        st.write("No experiments to show.")
+        st.stop()
 
     # Overview
     st.header("Experiments Overview 📓")
@@ -74,6 +77,10 @@ def main():
         with details_col.container(border=True):
             st.write(f"{experiment['temperature']}")
 
+        if st.button("Delete Experiment", type="primary"):
+            delete_experiment(experiment_id, con)
+            st.rerun()
+
     with metrics_col:
         st.subheader("Metrics")
         baseline_id = st.selectbox(
@@ -110,10 +117,6 @@ def main():
     with flow_col:
         st.subheader("Flow")
         st.code(flow_code)
-
-    if st.button("Delete Experiment", type='primary'):
-        delete_experiment(experiment_id, con)
-        st.rerun()
 
 
 if __name__ == "__main__":
