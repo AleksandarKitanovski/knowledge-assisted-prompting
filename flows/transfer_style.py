@@ -13,7 +13,7 @@ Follow these guidelines:
     * Do not remove or alter the core facts or topics mentioned.
     * Keep the rewritten sentence approximately the same length as the original (within a few words).
     * The output must sound natural, fluent, and human, like a genuine positive review.
-    * Only change the tone and sentiment from negative to positive — not the content.
+    * Only change the tone and sentiment from negative to positive - not the content.
 Return only the transformed sentence.""",
         template="""Sentiment transfer changes the sentiment of a sentence while keeping non-sentiment-related content unchanged.
 Change the sentiment of the following English sentence from negative to positive without adding any extra information: {sentence}
