@@ -130,7 +130,7 @@ def run_and_save_experiment(model, flow_file, temperature, con):
 
 def evaluate_experiment(experiment_id, output_data, col, con):
     with col:
-        st.subheader("Evaluate Experiment 🔍")
+        st.subheader("Metrics 🔍")
         if output_data is not None:
             tokenizer = AutoTokenizer.from_pretrained("yelp_review_classifier")
             classifier = AutoModelForSequenceClassification.from_pretrained(
@@ -153,9 +153,21 @@ def evaluate_experiment(experiment_id, output_data, col, con):
                 )
             metrics["accuracy"] = metrics["accuracy"] / len(output_data)
 
-            st.write(f"Average Perplexity: {metrics['perplexity']:.2f}")
-            st.write(f"SacreBLEU: {metrics['rsbleu']:.2f}")
-            st.write(f"Accuracy: {metrics['accuracy']:.2f}")
+            st.metric(
+                label="Average Perplexity",
+                value=f"{metrics['perplexity']:.2f}",
+                border=True,
+            )
+            st.metric(
+                label="SacreBLEU",
+                value=f"{metrics['rsbleu']:.2f}",
+                border=True,
+            )
+            st.metric(
+                label="Accuracy",
+                value=f"{metrics['accuracy']:.2f}",
+                border=True,
+            )
 
             cur = con.cursor()
             cur.execute(
@@ -235,7 +247,7 @@ def main():
     # Show Results
     with results_col:
         output_data = None
-        st.subheader("Experiment Results 📋")
+        st.subheader("Experiment Outputs 📋")
         if len(results) > 0:
             output_data = data.__deepcopy__()
             output_data["Output"] = results
