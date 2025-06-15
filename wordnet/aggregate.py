@@ -43,5 +43,5 @@ Antonyms: [{", ".join(self.__antonyms)}]
         return self.__word
 
     def __repr__(self) -> str:
-        return f"WordObject({self.__word}, {self.__synonyms}, {self.__antonyms})"
+        return f"WordNetObject({self.__word}, {self.__synonyms}, {self.__antonyms})"
 

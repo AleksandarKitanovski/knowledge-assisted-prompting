@@ -6,12 +6,13 @@ from nltk.tokenize import word_tokenize
 from wordnet.aggregate import WordNetObject
 
 
-def get_polarizing_words(sentence: str, cutoff: float = 0.5) -> WordNetObject:
+def get_polarizing_words(sentence: str, cutoff: float = 0.5) -> list[WordNetObject]:
     """
     Returns a list of polarizing word objects from the sentence which are found in SentiWordNet.
     Words which have a neg_score greater than cutoff are considered polarizing.
 
     :param str sentence: The query sentence
+    :param float cutoff: The cutoff score to consider a word polarizing
     :returns dict: List of polarizing word objects
     """
 
