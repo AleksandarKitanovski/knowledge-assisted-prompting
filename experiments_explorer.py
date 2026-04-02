@@ -1,19 +1,33 @@
-from datetime import datetime
 import sqlite3
+from datetime import datetime
 
+import numpy as np
 import pandas as pd
 import streamlit as st
+from scipy.stats import gmean
 
 
 def fetch_experiments(con: sqlite3.Connection) -> pd.DataFrame:
-    return pd.read_sql(
+    experiments = pd.read_sql(
         """
-        SELECT id, timestamp, name, description, model, temperature, flow, rsbleu, accuracy, avg_perplexity
+        SELECT id, timestamp, name, description, model, temperature, flow, rsbleu, accuracy, avg_perplexity, avg_bert_score
         FROM experiment
+        WHERE upper(name) like "%FULL%"
         """,
         con=con,
         index_col="id",
     )
+
+    experiments["inv_perplexity"] = experiments["avg_perplexity"].apply(
+        lambda ppl: 1 / np.log1p(ppl)
+    )
+    experiments['rsbleu'] = experiments['rsbleu'] / 100
+
+    experiments["geometric_mean"] = experiments[
+        ["rsbleu", "avg_bert_score", "inv_perplexity", "accuracy"]
+    ].apply(lambda scores: round(gmean(scores), 4), axis=1)
+
+    return experiments
 
 
 def delete_experiment(experiment_id: str, con: sqlite3.Connection):
@@ -27,6 +41,22 @@ def delete_experiment(experiment_id: str, con: sqlite3.Connection):
         {"id": experiment_id},
     )
     con.commit()
+
+
+def fetch_experiment_outputs(
+    experiment_id: str, con: sqlite3.Connection
+) -> pd.DataFrame:
+    return pd.read_sql(
+        """
+        SELECT e.negative as negative, e.positive as positive, eo.output as output
+        FROM example e
+        INNER JOIN experiment_output eo 
+            ON e.id = eo.example_id
+        WHERE eo.experiment_id = :experiment_id
+        """,
+        con=con,
+        params={"experiment_id": experiment_id},
+    )
 
 
 def main():
@@ -98,16 +128,25 @@ def main():
             delta_color="inverse",
             border=True,
         )
+
         st.metric(
             label="SacreBLEU",
             value=f"{experiment['rsbleu']:.2f}",
             delta=f"{experiment['rsbleu'] - baseline['rsbleu']:.2f}",
             border=True,
         )
+
         st.metric(
             label="Accuracy",
             value=f"{experiment['accuracy']:.2f}",
             delta=f"{experiment['accuracy'] - baseline['accuracy']:.2f}",
+            border=True,
+        )
+
+        st.metric(
+            label="BERTScore",
+            value=f"{experiment['avg_bert_score']:.2f}",
+            delta=f"{experiment['avg_bert_score'] - baseline['avg_bert_score']:.2f}",
             border=True,
         )
 
@@ -117,6 +156,12 @@ def main():
     with flow_col:
         st.subheader("Flow")
         st.code(flow_code)
+
+    # Details
+    st.header("Experiment Outputs 🔬")
+
+    outputs = fetch_experiment_outputs(experiment_id, con)
+    st.dataframe(outputs)
 
 
 if __name__ == "__main__":

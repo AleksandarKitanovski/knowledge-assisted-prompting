@@ -3,11 +3,11 @@ from stqdm import stqdm
 
 from ollama_interface.gateway import OllamaGateway
 from prompt.aggregate import PromptTemplate
-from wordnet.aggregate import WordNetObject
-from wordnet.utilities import get_polarizing_words
+from skg.aggregate import SKGObject
+from skg.utilities import get_polarizing_words
 
 
-def flow(data: pd.DataFrame, ollama_gateway: OllamaGateway) -> str:
+def flow(data: pd.DataFrame, ollama_gateway: OllamaGateway) -> list[str]:
     first_prompt_template = PromptTemplate(
         system="""You are an AI specialized in sentiment transfer from negative to positive.
 Your task is to rewrite a given negative customer review to express a positive sentiment, while preserving the original information and meaning.
@@ -39,9 +39,7 @@ Output: """,
 
     results = []
     for sentence in stqdm(data["Negative"].to_list()):
-        polarizing_words: list[WordNetObject] = get_polarizing_words(
-            sentence, cutoff=0.5
-        )
+        polarizing_words: list[SKGObject] = get_polarizing_words(sentence)
         if len(polarizing_words) > 0:
             words = "\n" + "\n".join(
                 polarizing_word.to_prompt_format()

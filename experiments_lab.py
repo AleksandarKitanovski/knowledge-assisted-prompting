@@ -11,6 +11,7 @@ from stqdm import stqdm
 from transformers import AutoModelForSequenceClassification, AutoTokenizer
 
 from evaluation.utils import (
+    calculate_avg_bert_score,
     calculate_avg_perplexity,
     calculate_sacrebleu,
     classify_sentence,
@@ -20,14 +21,20 @@ from ollama_interface.gateway import OllamaGateway
 
 def fetch_data(split, con):
     cur = con.cursor()
-    rows = cur.execute(
-        """
+
+    if split == "all":
+        query = """
         SELECT id, positive, negative 
         FROM example 
-        WHERE split = :split
-        """,
-        {"split": split},
-    ).fetchall()
+        """
+    else:
+        query = """
+        SELECT id, positive, negative 
+        FROM example 
+        WHERE split = '{split}'
+        """.format_map({"split": split})
+
+    rows = cur.execute(query).fetchall()
     return pd.DataFrame(rows, columns=("Id", "Positive", "Negative"))
 
 
@@ -51,6 +58,7 @@ def configuration(con):
                 """
             ).fetchall()
         ]
+        + ["all"]
     )
 
     models = [model_desc.model for model_desc in ollama.list().models]
@@ -136,13 +144,18 @@ def evaluate_experiment(experiment_id, output_data, col, con):
             classifier = AutoModelForSequenceClassification.from_pretrained(
                 "yelp_review_classifier"
             )
-            metrics = {}
+            metrics = dict()
 
             with st.spinner("Calculating Perplexity"):
                 metrics["perplexity"] = calculate_avg_perplexity(output_data["Output"])
 
             with st.spinner("Calculating SacreBLEU"):
                 metrics["rsbleu"] = calculate_sacrebleu(
+                    output_data["Output"], output_data["Positive"]
+                )
+
+            with st.spinner("Calculating BERTScore"):
+                metrics["avg_bert_score"] = calculate_avg_bert_score(
                     output_data["Output"], output_data["Positive"]
                 )
 
@@ -168,6 +181,11 @@ def evaluate_experiment(experiment_id, output_data, col, con):
                 value=f"{metrics['accuracy']:.2f}",
                 border=True,
             )
+            st.metric(
+                label="BERTScore",
+                value=f"{metrics['avg_bert_score']:.2f}",
+                border=True,
+            )
 
             cur = con.cursor()
             cur.execute(
@@ -175,7 +193,8 @@ def evaluate_experiment(experiment_id, output_data, col, con):
                 UPDATE experiment
                 SET avg_perplexity = :perplexity,
                     rsbleu = :rsbleu,
-                    accuracy = :accuracy
+                    accuracy = :accuracy,
+                    avg_bert_score = :bert_score
                 WHERE id = :experiment_id
                 """,
                 {
@@ -183,6 +202,7 @@ def evaluate_experiment(experiment_id, output_data, col, con):
                     "perplexity": metrics["perplexity"],
                     "rsbleu": metrics["rsbleu"],
                     "accuracy": metrics["accuracy"],
+                    "bert_score": metrics["avg_bert_score"],
                 },
             )
             con.commit()
@@ -217,7 +237,9 @@ def main():
     split, model, temperature, flow_file = configuration(con)
     data = fetch_data(split, con)
     ollama_gateway = OllamaGateway(
-        client=ollama.Client(), model=model, options={"temperature": temperature}
+        client=ollama.Client(), 
+        model=model, 
+        options={"temperature": temperature, "num_predict": 500}, 
     )
 
     data_col, prompt_col = st.columns(2, vertical_alignment="top")

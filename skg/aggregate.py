@@ -8,13 +8,13 @@ class SKGObject:
         self.__antonyms = antonyms
 
     def word(self) -> str:
-        self.__word
+        return self.__word
 
     def synonyms(self) -> set[str]:
-        self.__synonyms
+        return self.__synonyms
 
     def antonyms(self) -> set[str]:
-        self.__antonyms
+        return self.__antonyms
 
     def to_prompt_format(self) -> str:
         """

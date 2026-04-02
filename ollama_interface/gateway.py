@@ -15,7 +15,7 @@ class RelatedWords(BaseModel):
 
 
 class OllamaGateway:
-    def __init__(self, client: Client, model: str, options: dict[str, str]):
+    def __init__(self, client: Client, model: str, options: dict):
         self.__client = client
         self.__model = model
         self.__options = options
@@ -29,8 +29,11 @@ class OllamaGateway:
             prompt=prompt_template.build_prompt(**query_params),
         )
 
-        response = json.loads(result.response)
-        return response["output"]
+        try:
+            response = json.loads(result.response)
+            return response["output"]
+        except:
+            return ""
 
     def generate_synonyms_and_antonyms(
         self, prompt_template: PromptTemplate, **query_params

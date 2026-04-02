@@ -28,6 +28,9 @@ def get_polarizing_words(sentence: str) -> list[SKGObject]:
 
     words = []
     for tagged_word in tagged_words:
+        if tagged_word not in _graph:
+            continue
+
         synonyms = get_synonyms(tagged_word)
         antonyms = get_antonyms(tagged_word)
         words.append(SKGObject(tagged_word, synonyms, antonyms))
@@ -38,7 +41,7 @@ def get_polarizing_words(sentence: str) -> list[SKGObject]:
 def get_antonyms(start_node: str) -> set[str]:
     if start_node not in _graph:
         return set()
-    
+
     antonyms = set()
     for node in _graph[start_node]:
         edge = _graph[start_node][node]

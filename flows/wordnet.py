@@ -7,7 +7,7 @@ from wordnet.aggregate import WordNetObject
 from wordnet.utilities import get_polarizing_words
 
 
-def flow(data: pd.DataFrame, ollama_gateway: OllamaGateway) -> str:
+def flow(data: pd.DataFrame, ollama_gateway: OllamaGateway) -> list[str]:
     prompt_template = PromptTemplate(
         system="""You are an AI specialized in sentiment transfer from negative to positive.
 Your task is to rewrite a given negative customer review to express a positive sentiment, while preserving the original information and meaning.
@@ -23,7 +23,7 @@ Change the sentiment of the following English sentence from negative to positive
 Output: """,
     )
 
-    results = []
+    results: list[str] = []
     for sentence in stqdm(data["Negative"].to_list()):
         polarizing_words: list[WordNetObject] = get_polarizing_words(
             sentence, cutoff=0.5

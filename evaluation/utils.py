@@ -1,4 +1,5 @@
 import evaluate
+import numpy as np
 import pandas as pd
 from tqdm.auto import tqdm
 from transformers import AutoModelForSequenceClassification, AutoTokenizer
@@ -44,5 +45,16 @@ def calculate_sacrebleu(predictions: pd.Series, references: pd.Series) -> float:
 
 def calculate_avg_perplexity(sentences: pd.Series) -> float:
     perplexity = evaluate.load("perplexity", module_type="metric")
-    result = perplexity.compute(predictions=sentences, model_id="gpt2")
+    result = perplexity.compute(predictions=list(filter(lambda s: len(s) >= 1, sentences)), model_id="gpt2")
     return float(result["mean_perplexity"])
+
+
+def calculate_avg_bert_score(predictions: pd.Series, references: pd.Series) -> float:
+    bertscore = evaluate.load("bertscore")
+    results = bertscore.compute(
+        predictions=predictions,
+        references=references,
+        model_type="distilbert-base-uncased",
+        lang="en",
+    )
+    return np.mean(results["f1"])
