@@ -12,7 +12,6 @@ def fetch_experiments(con: sqlite3.Connection) -> pd.DataFrame:
         """
         SELECT id, timestamp, name, description, model, temperature, flow, rsbleu, accuracy, avg_perplexity, avg_bert_score
         FROM experiment
-        WHERE upper(name) like "%FULL%"
         """,
         con=con,
         index_col="id",

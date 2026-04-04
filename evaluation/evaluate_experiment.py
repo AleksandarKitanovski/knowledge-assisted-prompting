@@ -91,7 +91,7 @@ def main():
         "--classifier",
         help="name of the classifier model to be used in the accuracy calculation (local or from huggingface)",
         type=str,
-        default="yelp_review_classifier",
+        default="aleks240/yelp_review_classifier",
     )
     parser.add_argument(
         "--verbose",

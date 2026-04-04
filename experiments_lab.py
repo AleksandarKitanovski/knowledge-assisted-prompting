@@ -140,9 +140,9 @@ def evaluate_experiment(experiment_id, output_data, col, con):
     with col:
         st.subheader("Metrics 🔍")
         if output_data is not None:
-            tokenizer = AutoTokenizer.from_pretrained("yelp_review_classifier")
+            tokenizer = AutoTokenizer.from_pretrained("aleks240/yelp_review_classifier")
             classifier = AutoModelForSequenceClassification.from_pretrained(
-                "yelp_review_classifier"
+                "aleks240/yelp_review_classifier"
             )
             metrics = dict()
 
